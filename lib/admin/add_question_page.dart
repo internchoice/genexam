@@ -19,7 +19,6 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
   bool _loading = false;
 
   Future<void> _save() async {
-    // 🔐 VALIDATION
     if (_questionCtrl.text.trim().isEmpty) {
       _error("Question is required");
       return;
@@ -48,7 +47,7 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
     await FirebaseFirestore.instance.collection('questions').add({
       'question': _questionCtrl.text.trim(),
       'options': _options.map((e) => e.text.trim()).toList(),
-      'correctIndex': _correctIndex, // 🔑 used for scoring
+      'correctIndex': _correctIndex,
       'marks': marks,
       'createdAt': FieldValue.serverTimestamp(),
     });
@@ -59,12 +58,7 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
 
   void _toggleCorrect(int index, bool? value) {
     setState(() {
-      if (value == true) {
-        // Only ONE correct allowed
-        _correctIndex = index;
-      } else {
-        _correctIndex = null;
-      }
+      _correctIndex = value == true ? index : null;
     });
   }
 
@@ -76,63 +70,112 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 600;
+
     return Scaffold(
       appBar: AppBar(title: const Text("Add Question")),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: ListView(
-          children: [
-            TextField(
-              controller: _questionCtrl,
-              decoration: const InputDecoration(
-                labelText: "Question",
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-
-            const SizedBox(height: 20),
-
-            for (int i = 0; i < 4; i++)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Checkbox(
-                    value: _correctIndex == i,
-                    onChanged: (v) => _toggleCorrect(i, v),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _options[i],
-                      decoration: InputDecoration(
-                        labelText: "Option ${i + 1}",
-                        border: const OutlineInputBorder(),
-                      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: isWideScreen ? 600 : double.infinity),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Question input
+                TextField(
+                  controller: _questionCtrl,
+                  decoration: InputDecoration(
+                    labelText: "Question",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                ],
-              ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 20),
 
-            const SizedBox(height: 20),
+                // Options
+                Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: List.generate(4, (i) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Checkbox(
+                                value: _correctIndex == i,
+                                onChanged: (v) => _toggleCorrect(i, v),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              Expanded(
+                                child: TextField(
+                                  controller: _options[i],
+                                  decoration: InputDecoration(
+                                    labelText: "Option ${i + 1}",
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ),
 
-            TextField(
-              controller: _marksCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Marks",
-                border: OutlineInputBorder(),
-              ),
+                const SizedBox(height: 20),
+
+                // Marks input
+                TextField(
+                  controller: _marksCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: "Marks",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Save button
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      backgroundColor: Colors.blue.shade700,
+                    ),
+                    child: _loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                      "Save Question",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.white,),
+                    ),
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 30),
-
-            ElevatedButton(
-              onPressed: _loading ? null : _save,
-              child: _loading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Save Question"),
-            ),
-          ],
+          ),
         ),
       ),
     );

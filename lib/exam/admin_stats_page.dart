@@ -7,7 +7,13 @@ class AdminStatsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Exam Statistics")),
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text("Exam Statistics"),
+        backgroundColor: Colors.deepPurple,
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('attempts')
@@ -20,7 +26,12 @@ class AdminStatsPage extends StatelessWidget {
 
           final docs = snapshot.data!.docs;
           if (docs.isEmpty) {
-            return const Center(child: Text("No data"));
+            return const Center(
+              child: Text(
+                "No data available",
+                style: TextStyle(fontSize: 18),
+              ),
+            );
           }
 
           int totalScore = 0;
@@ -36,16 +47,30 @@ class AdminStatsPage extends StatelessWidget {
           }
 
           final avg = totalScore / docs.length;
-          final passPercent =
-          (passCount / docs.length * 100).toStringAsFixed(1);
+          final passPercent = (passCount / docs.length * 100).toStringAsFixed(1);
 
           return Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                _card("Average Score", avg.toStringAsFixed(2)),
-                _card("Pass Percentage", "$passPercent %"),
-                _card("Total Students", docs.length.toString()),
+                _statCard(
+                  icon: Icons.bar_chart,
+                  title: "Average Score",
+                  value: avg.toStringAsFixed(2),
+                  color: Colors.deepPurple,
+                ),
+                _statCard(
+                  icon: Icons.check_circle,
+                  title: "Pass Percentage",
+                  value: "$passPercent%",
+                  color: Colors.green,
+                ),
+                _statCard(
+                  icon: Icons.people,
+                  title: "Total Students",
+                  value: docs.length.toString(),
+                  color: Colors.orange,
+                ),
               ],
             ),
           );
@@ -54,16 +79,34 @@ class AdminStatsPage extends StatelessWidget {
     );
   }
 
-  Widget _card(String title, String value) {
+  Widget _statCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      elevation: 5,
+      shadowColor: color.withOpacity(0.5),
       child: ListTile(
-        title: Text(title),
+        leading: CircleAvatar(
+          backgroundColor: color.withOpacity(0.2),
+          child: Icon(icon, color: color),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
         trailing: Text(
           value,
-          style: const TextStyle(
-            fontSize: 20,
+          style: TextStyle(
+            fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: color,
           ),
         ),
       ),
