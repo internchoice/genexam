@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../routes.dart';
+import '../routes_admin.dart';
 
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
@@ -31,7 +31,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
       final uid = cred.user!.uid;
 
-      // 🔐 Check admin role
+      // 🔐 Check admin permission
       final adminDoc = await FirebaseFirestore.instance
           .collection('admins')
           .doc(uid)
@@ -39,15 +39,11 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
       if (!adminDoc.exists) {
         await FirebaseAuth.instance.signOut();
-        throw Exception("Access denied: Not an admin account");
+        throw Exception("Access denied: Admin only");
       }
 
       if (!mounted) return;
-
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.adminDashboard,
-      );
+      Navigator.pushReplacementNamed(context, '/admin/dashboard');
     } catch (e) {
       setState(() => error = e.toString());
     } finally {
@@ -58,10 +54,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Admin Login"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Admin Login")),
       body: Center(
         child: SizedBox(
           width: 420,
@@ -70,10 +63,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
             children: [
               const Text(
                 "Admin Panel",
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 30),
 
@@ -98,11 +88,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
               const SizedBox(height: 20),
 
               if (error != null)
-                Text(
-                  error!,
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
+                Text(error!, style: const TextStyle(color: Colors.red)),
 
               const SizedBox(height: 20),
 
@@ -114,21 +100,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                   child: loading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text("Login"),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // 🔗 LINK TO ADMIN REGISTER
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    AppRoutes.adminRegister,
-                  );
-                },
-                child: const Text(
-                  "Don't have an admin account? Register",
                 ),
               ),
             ],
