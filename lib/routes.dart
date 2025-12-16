@@ -1,34 +1,40 @@
 import 'package:flutter/material.dart';
+
+// student
 import 'auth/register_page.dart';
 import 'auth/login_page.dart';
+
+// admin
 import 'admin/admin_login_page.dart';
+import 'admin/admin_register_page.dart';
 import 'admin/admin_dashboard.dart';
-import 'admin/add_question_page.dart';
 
 class AppRoutes {
-  static const register = '/';
-  static const login = '/login';
+  // student
+  static const studentRegister = '/';
+  static const studentLogin = '/login';
 
+  // admin
   static const adminLogin = '/admin';
+  static const adminRegister = '/admin/register';
   static const adminDashboard = '/admin/dashboard';
-  static const addQuestion = '/admin/add-question';
 
   static Route<dynamic> generate(RouteSettings settings) {
     switch (settings.name) {
-      case register:
+      case studentRegister:
         return MaterialPageRoute(builder: (_) => const RegisterPage());
 
-      case login:
+      case studentLogin:
         return MaterialPageRoute(builder: (_) => const LoginPage());
 
       case adminLogin:
         return MaterialPageRoute(builder: (_) => const AdminLoginPage());
 
+      case adminRegister:
+        return MaterialPageRoute(builder: (_) => const AdminRegisterPage());
+
       case adminDashboard:
         return MaterialPageRoute(builder: (_) => const AdminDashboard());
-
-      case addQuestion:
-        return MaterialPageRoute(builder: (_) => const AddQuestionPage());
 
       default:
         return MaterialPageRoute(

@@ -13,6 +13,7 @@ class AdminLoginPage extends StatefulWidget {
 class _AdminLoginPageState extends State<AdminLoginPage> {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
+
   String? error;
   bool loading = false;
 
@@ -30,6 +31,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
       final uid = cred.user!.uid;
 
+      // 🔐 Check admin role
       final adminDoc = await FirebaseFirestore.instance
           .collection('admins')
           .doc(uid)
@@ -37,10 +39,11 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
       if (!adminDoc.exists) {
         await FirebaseAuth.instance.signOut();
-        throw Exception("Access denied: Not an admin");
+        throw Exception("Access denied: Not an admin account");
       }
 
       if (!mounted) return;
+
       Navigator.pushReplacementNamed(
         context,
         AppRoutes.adminDashboard,
@@ -55,37 +58,78 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Admin Login")),
+      appBar: AppBar(
+        title: const Text("Admin Login"),
+        centerTitle: true,
+      ),
       body: Center(
         child: SizedBox(
           width: 420,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Text(
+                "Admin Panel",
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 30),
+
               TextField(
                 controller: emailCtrl,
                 decoration: const InputDecoration(
                   labelText: "Admin Email",
+                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
+
               TextField(
                 controller: passCtrl,
                 obscureText: true,
                 decoration: const InputDecoration(
                   labelText: "Password",
+                  border: OutlineInputBorder(),
                 ),
               ),
+
               const SizedBox(height: 20),
+
               if (error != null)
                 Text(
                   error!,
                   style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
                 ),
+
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: loading ? null : login,
-                child: const Text("Login"),
+
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: loading ? null : login,
+                  child: loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Login"),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 🔗 LINK TO ADMIN REGISTER
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    AppRoutes.adminRegister,
+                  );
+                },
+                child: const Text(
+                  "Don't have an admin account? Register",
+                ),
               ),
             ],
           ),
