@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'routes.dart';
+
+// apps
+import 'student_app.dart';
+import 'admin_app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.web,
   );
-  runApp(const MyApp());
-}
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String path = Uri.base.path;
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-
-      // 🔑 Let Flutter Web read the browser URL
-      onGenerateRoute: AppRoutes.generate,
-    );
+  // 🔥 CRITICAL: Decide app BEFORE UI loads
+  if (path.startsWith('/admin')) {
+    runApp(const AdminApp());
+  } else {
+    runApp(const StudentApp());
   }
 }
