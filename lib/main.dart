@@ -8,7 +8,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.web,
   );
-
   runApp(const MyApp());
 }
 
@@ -20,9 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      // 🌐 IMPORTANT: let Flutter handle URL paths like /admin
-      initialRoute: AppRoutes.studentRegister,
-
+      // 🔑 Let Flutter Web read the browser URL
       onGenerateRoute: AppRoutes.generate,
     );
   }
