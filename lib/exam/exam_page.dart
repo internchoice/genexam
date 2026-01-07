@@ -12,8 +12,8 @@ class ExamPage extends StatefulWidget {
 }
 
 class _ExamPageState extends State<ExamPage> {
-  final int examDuration = 3600; // 60 minutes
-  int remaining = 3600;
+  final int examDuration = 1800; // 60 minutes
+  int remaining = 1800;
 
   Timer? _timer;
   late ExamGuard _guard;
