@@ -12,9 +12,8 @@ class ExamPage extends StatefulWidget {
 }
 
 class _ExamPageState extends State<ExamPage> {
-  // ✅ 30 minutes = 1800 seconds
-  final int examDuration = 30 * 60;
-  int remaining = 30 * 60;
+  final int examDuration = 1800; // 60 minutes
+  int remaining = 1800;
 
   Timer? _timer;
   late ExamGuard _guard;
@@ -33,20 +32,17 @@ class _ExamPageState extends State<ExamPage> {
     _startExam();
   }
 
-  // ✅ FIXED TIMER FORMAT (HH:MM:SS)
   String formatTime(int seconds) {
-    final h = seconds ~/ 3600;
-    final m = (seconds % 3600) ~/ 60;
+    final h = seconds ~/ 1800;
+    final m = (seconds % 1800) ~/ 60;
     final s = seconds % 60;
-
-    return "${h.toString().padLeft(2, '0')}:"
-        "${m.toString().padLeft(2, '0')}:"
-        "${s.toString().padLeft(2, '0')}";
+    return "${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}";
   }
 
   Future<void> _startExam() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
+    // Fetch user info
     userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
     await FirebaseFirestore.instance.collection('attempts').doc(uid).set({
@@ -100,24 +96,16 @@ class _ExamPageState extends State<ExamPage> {
       'endedAt': FieldValue.serverTimestamp(),
     });
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .update({'hasAttemptedExam': true});
-
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({'hasAttemptedExam': true});
     await FirebaseAuth.instance.signOut();
 
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => ExamFinishedPage(
-          score: score,
-          total: totalMarks,
-          userDoc: userDoc,
-        ),
+        builder: (_) => ExamFinishedPage(score: score, total: totalMarks, userDoc: userDoc),
       ),
-      (_) => false,
+          (_) => false,
     );
   }
 
@@ -132,25 +120,16 @@ class _ExamPageState extends State<ExamPage> {
       'endedAt': FieldValue.serverTimestamp(),
     });
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .update({'hasAttemptedExam': true});
-
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({'hasAttemptedExam': true});
     await FirebaseAuth.instance.signOut();
 
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => ExamFinishedPage(
-          score: 0,
-          total: 0,
-          cancelled: true,
-          userDoc: userDoc,
-        ),
+        builder: (_) => ExamFinishedPage(score: 0, total: 0, cancelled: true, userDoc: userDoc),
       ),
-      (_) => false,
+          (_) => false,
     );
   }
 
@@ -164,6 +143,7 @@ class _ExamPageState extends State<ExamPage> {
 
     final q = questions[currentIndex];
     double progress = (currentIndex + 1) / questions.length;
+
     const optionLetters = ['A', 'B', 'C', 'D'];
 
     return Scaffold(
@@ -179,13 +159,54 @@ class _ExamPageState extends State<ExamPage> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              // User Profile Card
+              if (userDoc != null)
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  elevation: 3,
+                  color: Colors.deepPurple[50],
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.deepPurple,
+                          child: Icon(Icons.person, color: Colors.white, size: 30),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userDoc!['name'] ?? '',
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "${userDoc!['course'] ?? ''} | Roll No: ${userDoc!['rollNumber'] ?? ''}",
+                                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                              ),
+                              Text(
+                                userDoc!['email'] ?? '',
+                                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+
+              // Timer & Question Count
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     "Q${currentIndex + 1}/${questions.length}",
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -204,12 +225,136 @@ class _ExamPageState extends State<ExamPage> {
                   )
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+
+              // Question Card
+              Expanded(
+                child: Card(
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          q['question'],
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: q['options'].length,
+                            itemBuilder: (context, i) {
+                              final isSelected = answers[currentIndex] == i;
+                              return Container(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isSelected ? Colors.deepPurple : Colors.white,
+                                    foregroundColor: isSelected ? Colors.white : Colors.black87,
+                                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(
+                                        color: isSelected ? Colors.deepPurple : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                  onPressed: submitting
+                                      ? null
+                                      : () {
+                                    setState(() {
+                                      answers = List<int?>.from(answers);
+                                      answers[currentIndex] = i;
+                                    });
+                                  },
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 14,
+                                        backgroundColor: isSelected ? Colors.white : Colors.deepPurple[100],
+                                        child: Text(
+                                          optionLetters[i],
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: isSelected ? Colors.deepPurple : Colors.deepPurple[800]),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          q['options'][i],
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Navigation & Progress
+              Row(
+                children: [
+                  if (currentIndex > 0)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => setState(() => currentIndex--),
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text("Previous"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[600],
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                      ),
+                    ),
+                  if (currentIndex > 0) const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: submitting
+                          ? null
+                          : () {
+                        if (currentIndex < questions.length - 1) {
+                          setState(() => currentIndex++);
+                        } else {
+                          _submitExam();
+                        }
+                      },
+                      icon: Icon(
+                        currentIndex < questions.length - 1 ? Icons.arrow_forward : Icons.check,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        currentIndex < questions.length - 1 ? "Next" : "Submit",
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               LinearProgressIndicator(
                 value: progress,
-                minHeight: 6,
                 backgroundColor: Colors.deepPurple[100],
                 color: Colors.deepPurple,
+                minHeight: 6,
               ),
             ],
           ),
@@ -236,10 +381,56 @@ class ExamFinishedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       body: Center(
-        child: Text(
-          cancelled ? "Exam Cancelled" : "Exam Finished",
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        child: Card(
+          margin: const EdgeInsets.all(24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 5,
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (userDoc != null)
+                  Column(
+                    children: [
+                      Text(
+                        userDoc!['name'] ?? '',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${userDoc!['course'] ?? ''} | Roll No: ${userDoc!['rollNumber'] ?? ''}",
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                Icon(
+                  cancelled ? Icons.cancel : Icons.check_circle,
+                  size: 80,
+                  color: cancelled ? Colors.red : Colors.green,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  cancelled
+                      ? "Exam Cancelled"
+                      : "Exam Finished\nThank you for completing the exam! Your results will be available soon.",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "You may now close this tab.",
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
