@@ -12,8 +12,8 @@
 // }
 //
 // class _ExamPageState extends State<ExamPage> {
-//   final int examDuration = 1800; // 60 minutes
-//   int remaining = 1800;
+//   final int examDuration = 3600; // 60 minutes
+//   int remaining = 3600;
 //
 //   Timer? _timer;
 //   late ExamGuard _guard;
@@ -33,8 +33,8 @@
 //   }
 //
 //   String formatTime(int seconds) {
-//     final h = seconds ~/ 1800;
-//     final m = (seconds % 1800) ~/ 60;
+//     final h = seconds ~/ 3600;
+//     final m = (seconds % 3600) ~/ 60;
 //     final s = seconds % 60;
 //     return "${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}";
 //   }
@@ -453,8 +453,8 @@ class ExamPage extends StatefulWidget {
 }
 
 class _ExamPageState extends State<ExamPage> {
-  final int examDuration = 1800;
-  int remaining = 1800;
+  final int examDuration = 3600;
+  int remaining = 3600;
 
   Timer? _timer;
   late ExamGuard _guard;
